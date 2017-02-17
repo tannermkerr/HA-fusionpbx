@@ -17,10 +17,12 @@ sudo apt-get update
 ``` -->
 
 3. Make sure the following packages are installed:
-`sudo apt-get install php5-sqlite libuv-dev flex libtool php5-fpm ssl-cert nginx libjson0-dev php-db libexpat-dev php5-cli sqlite fail2ban lsb-release python-software-properties libpcap-dev ghostscript git-core libjpeg-dev subversion build-essential autoconf automake devscripts gawk g++ make libncurses5-dev python-dev pkg-config libtiff5-dev libldns-dev libperl-dev libgdbm-dev libdb-dev gettext libcurl4-openssl-dev libpcre3-dev libspeex-dev libspeexdsp-dev libsqlite3-dev libedit-dev libpq-dev screen htop bzip2 curl memcached ntp php5-curl php5-imap php5-mcrypt lame time bison libssl-dev unixodbc libmyodbc unixodbc-dev libtiff-tools libmemcached-dev libtool-bin yasm nasm liblua5.2-0 liblua5.2-dev libopus-dev libcodec2-dev libyuv-dev libsndfile-dev libvpx-dev libvpx2-dev postgresql-bdr-9.4 postgresql-bdr-9.4-bdr-plugin php5-pgsql tmux csync2 tree keepalived inotify-tools`
+```
+sudo apt-get install php5-sqlite libuv-dev flex libtool php5-fpm ssl-cert nginx libjson0-dev php-db libexpat-dev php5-cli sqlite fail2ban lsb-release python-software-properties libpcap-dev ghostscript git-core libjpeg-dev subversion build-essential autoconf automake devscripts gawk g++ make libncurses5-dev python-dev pkg-config libtiff5-dev libldns-dev libperl-dev libgdbm-dev libdb-dev gettext libcurl4-openssl-dev libpcre3-dev libspeex-dev libspeexdsp-dev libsqlite3-dev libedit-dev libpq-dev screen htop bzip2 curl memcached ntp php5-curl php5-imap php5-mcrypt lame time bison libssl-dev unixodbc libmyodbc unixodbc-dev libtiff-tools libmemcached-dev libtool-bin yasm nasm liblua5.2-0 liblua5.2-dev libopus-dev libcodec2-dev libyuv-dev libsndfile-dev libvpx-dev libvpx2-dev postgresql-bdr-9.4 postgresql-bdr-9.4-bdr-plugin php5-pgsql tmux csync2 tree keepalived inotify-tools
+```
 
 4. Add the following postgres conf files:
-#/etc/postgresql/9.4/main/pg_hba.conf
+###/etc/postgresql/9.4/main/pg_hba.conf
 Replace YOURSUBNET with the cidr of your subnet...
 ```
 local   all             postgres                                peer
@@ -44,7 +46,7 @@ host    replication     postgres        127.0.0.1/32            md5
 host  replication     postgres        YOURSUBNET   
 ```
 
-#/etc/postgresql/9.4/main/postgres.conf
+###/etc/postgresql/9.4/main/postgres.conf
 ```
 data_directory = '/var/lib/postgresql/9.4/main'        # use data in another directory
                     # (change requires restart)
@@ -114,4 +116,6 @@ create extension bdr;
 
 9. add freeswitch db tables
 
-10. switch to pg
+10. switch to pg (set switchname, nonlocal bind)
+
+11. keepalived
