@@ -276,7 +276,9 @@ host    replication     postgres        127.0.0.1/32            md5
 host  replication     postgres        YOURSUBNET              trust
 ```
 
-5. On fusion2 join to bdr group
+5. Reboot fusion2
+
+6. On fusion2 join to bdr group
 ```
 su -l postgres
 psql fusionpbx
@@ -285,6 +287,7 @@ select bdr.bdr_group_join(local_node_name := 'fusion2', node_external_dsn := 'ho
 select bdr.bdr_group_join(local_node_name := 'fusion2', node_external_dsn := 'host=NODE2IP port=5432 dbname=freeswitch connect_timeout=10 keepalives_idle=5 keepalives_interval=1', join_using_dsn := 'host=NODE1IP  port=5432 dbname=freeswitch connect_timeout=10 keepalives_idle=5 keepalives_interval=1');
 ```
 
+##TODO
 . add freeswitch db tables
 
 . switch to pg (set switchname, nonlocal bind)
