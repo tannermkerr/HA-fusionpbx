@@ -3,109 +3,109 @@
 
 1. Create two machines with debian installs. Give both a public and private ip.
 
-###Fusion1
+  ###Fusion1
 2. Install fusionpbx on one machine, we'll call this one fusion1. BUT, Before running the install script (`./install.sh`) you will want to edit the `/usr/src/fusionpbx-install.sh/debian/resources/postgres.sh` installation file, so you don't have two separate postgres instances. Follow the steps below:
 
-```
-apt-get update && apt-get upgrade -y --force-yes
-apt-get install -y --force-yes git
-cd /usr/src
-git clone https://github.com/fusionpbx/fusionpbx-install.sh.git
-chmod 755 -R /usr/src/fusionpbx-install.sh
-cd /usr/src/fusionpbx-install.sh/debian
-```
+  ```
+  apt-get update && apt-get upgrade -y --force-yes
+  apt-get install -y --force-yes git
+  cd /usr/src
+  git clone https://github.com/fusionpbx/fusionpbx-install.sh.git
+  chmod 755 -R /usr/src/fusionpbx-install.sh
+  cd /usr/src/fusionpbx-install.sh/debian
+  ```
 Now uncomment the "Add PostgreSQL and BDR REPO" section, and comment out the "postgres official repository" like so:
-####/usr/src/fusionpbx-install.sh/debian/resources/postgres.sh
-```
-#!/bin/sh
+  ####/usr/src/fusionpbx-install.sh/debian/resources/postgres.sh
+  ```
+  #!/bin/sh
 
-#send a message
-echo "Install PostgreSQL"
+  #send a message
+  echo "Install PostgreSQL"
 
-#generate a random password
-password=$(dd if=/dev/urandom bs=1 count=20 2>/dev/null | base64)
+  #generate a random password
+  password=$(dd if=/dev/urandom bs=1 count=20 2>/dev/null | base64)
 
-#install message
-echo "Install PostgreSQL and create the database and users\n"
+  #install message
+  echo "Install PostgreSQL and create the database and users\n"
 
-#included in the distribution
-#apt-get install -y --force-yes sudo postgresql
+  #included in the distribution
+  #apt-get install -y --force-yes sudo postgresql
 
-#postgres official repository
-#echo 'deb http://apt.postgresql.org/pub/repos/apt/ jessie-pgdg main' >> /etc/apt/sources.list.d/pgdg.list
-#wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
-#apt-get update && apt-get upgrade -y
-#apt-get install -y --force-yes sudo postgresql
+  #postgres official repository
+  #echo 'deb http://apt.postgresql.org/pub/repos/apt/ jessie-pgdg main' >> /etc/apt/sources.list.d/pgdg.list
+  #wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+  #apt-get update && apt-get upgrade -y
+  #apt-get install -y --force-yes sudo postgresql
 
-#Add PostgreSQL and BDR REPO
-echo 'deb http://apt.postgresql.org/pub/repos/apt/ jessie-pgdg main'  >> /etc/apt/sources.list.d/postgresql.list
-echo 'deb http://packages.2ndquadrant.com/bdr/apt/ jessie-2ndquadrant main' >> /etc/apt/sources.list.d/2ndquadrant.list
-/usr/bin/wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | apt-key add -
-/usr/bin/wget --quiet -O - http://packages.2ndquadrant.com/bdr/apt/AA7A6805.asc | apt-key add -
-apt-get update && apt-get upgrade -y
-apt-get install -y --force-yes sudo postgresql-bdr-9.4 postgresql-bdr-9.4-bdr-plugin postgresql-bdr-contrib-9.4
+  #Add PostgreSQL and BDR REPO
+  echo 'deb http://apt.postgresql.org/pub/repos/apt/ jessie-pgdg main'  >> /etc/apt/sources.list.d/postgresql.list
+  echo 'deb http://packages.2ndquadrant.com/bdr/apt/ jessie-2ndquadrant main' >> /etc/apt/sources.list.d/2ndquadrant.list
+  /usr/bin/wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | apt-key add -
+  /usr/bin/wget --quiet -O - http://packages.2ndquadrant.com/bdr/apt/AA7A6805.asc | apt-key add -
+  apt-get update && apt-get upgrade -y
+  apt-get install -y --force-yes sudo postgresql-bdr-9.4 postgresql-bdr-9.4-bdr-plugin postgresql-bdr-contrib-9.4
 
-#systemd
-systemctl daemon-reload
-systemctl restart postgresql
+  #systemd
+  systemctl daemon-reload
+  systemctl restart postgresql
 
-#init.d
-#/usr/sbin/service postgresql restart
+  #init.d
+  #/usr/sbin/service postgresql restart
 
-#move to /tmp to prevent a red herring error when running sudo with psql
-cwd=$(pwd)
-cd /tmp
-#add the databases, users and grant permissions to them
-sudo -u postgres psql -c "CREATE DATABASE fusionpbx";
-sudo -u postgres psql -c "CREATE DATABASE freeswitch";
-sudo -u postgres psql -c "CREATE ROLE fusionpbx WITH SUPERUSER LOGIN PASSWORD '$password';"
-sudo -u postgres psql -c "CREATE ROLE freeswitch WITH SUPERUSER LOGIN PASSWORD '$password';"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE fusionpbx to fusionpbx;"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE freeswitch to fusionpbx;"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE freeswitch to freeswitch;"
-#ALTER USER fusionpbx WITH PASSWORD 'newpassword';
-cd $cwd
+  #move to /tmp to prevent a red herring error when running sudo with psql
+  cwd=$(pwd)
+  cd /tmp
+  #add the databases, users and grant permissions to them
+  sudo -u postgres psql -c "CREATE DATABASE fusionpbx";
+  sudo -u postgres psql -c "CREATE DATABASE freeswitch";
+  sudo -u postgres psql -c "CREATE ROLE fusionpbx WITH SUPERUSER LOGIN PASSWORD '$password';"
+  sudo -u postgres psql -c "CREATE ROLE freeswitch WITH SUPERUSER LOGIN PASSWORD '$password';"
+  sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE fusionpbx to fusionpbx;"
+  sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE freeswitch to fusionpbx;"
+  sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE freeswitch to freeswitch;"
+  #ALTER USER fusionpbx WITH PASSWORD 'newpassword';
+  cd $cwd
 
-#set the ip address
-#server_address=$(hostname -I)
-```
+  #set the ip address
+  #server_address=$(hostname -I)
+  ```
 The BDR repositories and packages are needed for HA. Now do the install (/usr/src/fusionpbx-install.sh/debian/install.sh):
 
-```
-./install.sh
-```
-*Take note of the password you've been given in the output.*
+  ```
+  ./install.sh
+  ```
+  *Take note of the password you've been given in the output.*
 
 
 3. Make sure the following packages are installed:
-```
-sudo apt-get install php5-sqlite libuv-dev flex libtool php5-fpm ssl-cert nginx libjson0-dev php-db libexpat-dev php5-cli sqlite fail2ban lsb-release python-software-properties libpcap-dev ghostscript git-core libjpeg-dev subversion build-essential autoconf automake devscripts gawk g++ make libncurses5-dev python-dev pkg-config libtiff5-dev libldns-dev libperl-dev libgdbm-dev libdb-dev gettext libcurl4-openssl-dev libpcre3-dev libspeex-dev libspeexdsp-dev libsqlite3-dev libedit-dev libpq-dev screen htop bzip2 curl memcached ntp php5-curl php5-imap php5-mcrypt lame time bison libssl-dev unixodbc libmyodbc unixodbc-dev libtiff-tools libmemcached-dev libtool-bin yasm nasm liblua5.2-0 liblua5.2-dev libopus-dev libcodec2-dev libyuv-dev libsndfile-dev libvpx-dev libvpx2-dev postgresql-bdr-9.4 postgresql-bdr-9.4-bdr-plugin postgresql-bdr-contrib-9.4  php5-pgsql tmux csync2 tree keepalived inotify-tools
-```
+  ```
+  sudo apt-get install php5-sqlite libuv-dev flex libtool php5-fpm ssl-cert nginx libjson0-dev php-db libexpat-dev php5-cli sqlite fail2ban lsb-release python-software-properties libpcap-dev ghostscript git-core libjpeg-dev subversion build-essential autoconf automake devscripts gawk g++ make libncurses5-dev python-dev pkg-config libtiff5-dev libldns-dev libperl-dev libgdbm-dev libdb-dev gettext libcurl4-openssl-dev libpcre3-dev libspeex-dev libspeexdsp-dev libsqlite3-dev libedit-dev libpq-dev screen htop bzip2 curl memcached ntp php5-curl php5-imap php5-mcrypt lame time bison libssl-dev unixodbc libmyodbc unixodbc-dev libtiff-tools libmemcached-dev libtool-bin yasm nasm liblua5.2-0 liblua5.2-dev libopus-dev libcodec2-dev libyuv-dev libsndfile-dev libvpx-dev libvpx2-dev postgresql-bdr-9.4 postgresql-bdr-9.4-bdr-plugin postgresql-bdr-contrib-9.4  php5-pgsql tmux csync2 tree keepalived inotify-tools
+  ```
 
 4. Add the following postgres conf files:
-###/etc/postgresql/9.4/main/pg_hba.conf
+  ###/etc/postgresql/9.4/main/pg_hba.conf
 Replace YOURSUBNET with the cidr of your subnet...
-```
-local   all             postgres                                peer
+  ```
+  local   all             postgres                                peer
 
-# TYPE  DATABASE        USER            ADDRESS                 METHOD
+  # TYPE  DATABASE        USER            ADDRESS                 METHOD
 
-# "local" is for Unix domain socket connections only
-local   all             all                                     peer
-# IPv4 local connections:
-host    all             all             127.0.0.1/32            md5
-#hostssl all             all             YOURSUBNET            trust # FOR SSL
-host all             all             YOURSUBNET            trust
-# IPv6 local connections:
-host    all             all             ::1/128                 md5
-# Allow replication connections from localhost, by a user with the
-# replication privilege.
-#local   replication     postgres                                peer
-host    replication     postgres        127.0.0.1/32            md5
-#host    replication     postgres        ::1/128                 md5
-#hostssl  replication     postgres        YOURSUBNET            trust # FOR SSL
-host  replication     postgres        YOURSUBNET              trust
-```
+  # "local" is for Unix domain socket connections only
+  local   all             all                                     peer
+  # IPv4 local connections:
+  host    all             all             127.0.0.1/32            md5
+  #hostssl all             all             YOURSUBNET            trust # FOR SSL
+  host all             all             YOURSUBNET            trust
+  # IPv6 local connections:
+  host    all             all             ::1/128                 md5
+  # Allow replication connections from localhost, by a user with the
+  # replication privilege.
+  #local   replication     postgres                                peer
+  host    replication     postgres        127.0.0.1/32            md5
+  #host    replication     postgres        ::1/128                 md5
+  #hostssl  replication     postgres        YOURSUBNET            trust # FOR SSL
+  host  replication     postgres        YOURSUBNET              trust
+  ```
 
 ###/etc/postgresql/9.4/main/postgres.conf
 ```
