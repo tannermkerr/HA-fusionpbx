@@ -213,7 +213,8 @@ data_directory = '/var/lib/postgresql/9.4/main'        # use data in another dir
 hba_file = '/etc/postgresql/9.4/main/pg_hba.conf'    # host-based authentication file
                     # (change requires restart)
 ident_file = '/etc/postgresql/9.4/main/pg_ident.conf'    # ident configuration file
-                    # (change requires restart)
+                    # (change requires resta##TODO
+rt)
 
 external_pid_file = '/var/run/postgresql/9.4-main.pid'            # write an extra PID file
                     # (change requires restart)
@@ -300,7 +301,7 @@ select bdr.bdr_group_join(local_node_name := 'fusion2', node_external_dsn := 'ho
 select bdr.bdr_group_join(local_node_name := 'fusion2', node_external_dsn := 'host=NODE2IP port=5432 dbname=freeswitch connect_timeout=10 keepalives_idle=5 keepalives_interval=1', join_using_dsn := 'host=NODE1IP  port=5432 dbname=freeswitch connect_timeout=10 keepalives_idle=5 keepalives_interval=1');
 ```
 
-You should see the fusionpx on fusion2 contains a number of tables after the join, as it has copied the tables from fusion1. If both joins succeeded replication is now happening between both nodes. *You can check to see that the join has succeeded by doing a `select bdr.bdr_node_join_wait_for_ready();` on each database*. If it worked it will return, if it hangs, something has gone wrong.
+You should see the fusionpx on fusion2 contains a number of tables after the join, as it has copied the tables from fusion1. If both joins succeeded replication is now happening between both nodes. *You can check to see that the join has succeeded by doing a `select bdr.bdr_node_join_wai1. t_for_ready();` on each database*. If it worked it will return, if it hangs, something has gone wrong.
 You can also see the status of the nodes in the group by doing: `select * from bdr.bdr_nodes;`
 Active replicating nodes have node status 'r'.
 Initializing nodes have node status 'i'.
@@ -316,8 +317,65 @@ chmod 755 switch.sql
 su -l postgres
 psql -U postgres -d freeswitch -f /tmp/switch.sql -L sql.log
 ```
-##TODO
 
-. switch to pg (set switchname, nonlocal bind)
+8. Now that fusion2 is in the bdr group we can install fusionpbx on fusion2. This way we still have a GUI if fusion1 goes down for some reason. *Repeat step 2 for fusion1 on fusion2* to install fusionpbx on fusion2, make sure you uncomment the BDR section the same way to avoid having two instances of postgres. Make sure you can login to both fusion1 and fusion2.
+
+9. Tell freeswitch to use the postgres database. You'll have to set/uncomment the following lines in each file:
+###/etc/freeswitch/callcenter.conf
+```
+<param name="odbc-dsn" value="$${dsn}"/>
+```
+###/etc/freeswitch/switch.conf.xml
+```
+<param name="switchname" value="freeswitch"/>
+<param name="core-db-dsn" value="$${dsn}" />
+```
+###/etc/freeswitch/fifo.conf.xml
+```
+<param name="odbc-dsn" value="$${dsn}"/>
+```
+###/etc/freeswitch/db.conf.xml
+```
+<param name="core-db-dsn" value="$${dsn}" />
+```
+
+###/etc/freeswitch/voicemail.conf.xml
+```
+<param name="odbc-dsn" value="$${dsn}"/>
+```
+
+10. In order to tell fusion where the database is we need to define the DSN. Find out what the DSN is with: `cat /etc/fusionpbx/config.lua | grep database.switch`
+
+```
+root@jessie:/home/vagrant# cat /etc/fusionpbx/config.lua | grep database.switch
+	database.switch = "pgsql://hostaddr=127.0.0.1 port=5432 dbname=freeswitch user=fusionpbx password=YOURPASS options='' application_name='freeswitch'";
+```
+
+11. Create the DSN variable in the web GUI. Go to *Advanced -> Variables*, and click the plus on the right hand side in the defaults section. Create the variable with the following info:
+```
+Name: dsn
+Value: pgsql://hostaddr=127.0.0.1 port=5432 dbname=freeswitch user=fusionpbx password=YOURPASS options='' application_name='freeswitch'
+switchname: freeswitch
+Category: defaults
+```
+
+12. Now create another variable called *dsn_system*. You can get the value by doing this command: `cat /etc/fusionpbx/config.lua | grep database.system`
+```
+Name: dsn_system
+Value: pgsql://hostaddr=127.0.0.1 port=5432 dbname=fusionpbx user=fusionpbx password=YOURPASS options='' application_name='fusionpbx'
+switchname: freeswitch
+Category: defaults
+```
+
+13. Update the sip profiles table so they are kept in the postgres fusionpbx database instead of sqlite (default):
+```
+su postgres
+psql fusionpbx
+UPDATE v_sip_profile_settings SET sip_profile_setting_enabled = 'true' WHERE sip_profile_setting_name = 'odbc-dsn' AND sip_profile_setting_enabled = 'false';
+```
+
+14. Go into `/var/lib/freeswitch/db` and delete all the sqlite databases, then restart freeswitch on both fusion1 and fusion2. if freeswitch starts up again and `/var/lib/freeswitch/db` is empty you've successfully switched to postgres. If something goes wrong check the freeswitch log.
 
 . keepalived
+
+. add another set of sip profiles
