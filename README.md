@@ -3,7 +3,7 @@
 
 1. Create two machines with debian installs. Give both a public and private ip.
 
-  ###Fusion1
+###Fusion1
 2. Install fusionpbx on one machine, we'll call this one fusion1. BUT, Before running the install script (`./install.sh`) you will want to edit the `/usr/src/fusionpbx-install.sh/debian/resources/postgres.sh` installation file, so you don't have two separate postgres instances. Follow the steps below:
 
   ```
@@ -15,7 +15,7 @@
   cd /usr/src/fusionpbx-install.sh/debian
   ```
 Now uncomment the "Add PostgreSQL and BDR REPO" section, and comment out the "postgres official repository" like so:
-  ####/usr/src/fusionpbx-install.sh/debian/resources/postgres.sh
+####/usr/src/fusionpbx-install.sh/debian/resources/postgres.sh
   ```
   #!/bin/sh
 
@@ -74,7 +74,7 @@ The BDR repositories and packages are needed for HA. Now do the install (/usr/sr
   ```
   ./install.sh
   ```
-  *Take note of the password you've been given in the output.*
+*Take note of the password you've been given in the output.*
 
 
 3. Make sure the following packages are installed:
@@ -83,7 +83,7 @@ The BDR repositories and packages are needed for HA. Now do the install (/usr/sr
   ```
 
 4. Add the following postgres conf files:
-  ###/etc/postgresql/9.4/main/pg_hba.conf
+###/etc/postgresql/9.4/main/pg_hba.conf
 Replace YOURSUBNET with the cidr of your subnet...
   ```
   local   all             postgres                                peer
