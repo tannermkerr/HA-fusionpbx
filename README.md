@@ -338,7 +338,6 @@ Replace YOURSUBNET with the cidr of your subnet...
   ```
   <param name="core-db-dsn" value="$${dsn}" />
   ```
-
 ###/etc/freeswitch/voicemail.conf.xml
   ```
   <param name="odbc-dsn" value="$${dsn}"/>
