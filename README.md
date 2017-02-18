@@ -342,7 +342,6 @@ Replace YOURSUBNET with the cidr of your subnet...
   ```
   <param name="odbc-dsn" value="$${dsn}"/>
   ```
-
 11. In order to tell fusion where the database is we need to define the DSN. Find out what the DSN is with: `cat /etc/fusionpbx/config.lua | grep database.switch`
 
   ```
