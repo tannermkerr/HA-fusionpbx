@@ -108,198 +108,198 @@ Replace YOURSUBNET with the cidr of your subnet...
   ```
 
 ###/etc/postgresql/9.4/main/postgres.conf
-```
-data_directory = '/var/lib/postgresql/9.4/main'        # use data in another directory
-                    # (change requires restart)
-hba_file = '/etc/postgresql/9.4/main/pg_hba.conf'    # host-based authentication file
-                    # (change requires restart)
-ident_file = '/etc/postgresql/9.4/main/pg_ident.conf'    # ident configuration file
-                    # (change requires restart)
+  ```
+  data_directory = '/var/lib/postgresql/9.4/main'        # use data in another directory
+                      # (change requires restart)
+  hba_file = '/etc/postgresql/9.4/main/pg_hba.conf'    # host-based authentication file
+                      # (change requires restart)
+  ident_file = '/etc/postgresql/9.4/main/pg_ident.conf'    # ident configuration file
+                      # (change requires restart)
 
-external_pid_file = '/var/run/postgresql/9.4-main.pid'            # write an extra PID file
-                    # (change requires restart)
-listen_addresses = '*'        # what IP address(es) to listen on;
-                    # comma-separated list of addresses;
-                    # defaults to 'localhost'; use '*' for all
-                    # (change requires restart)
-port = 5432                # (change requires restart)
-max_connections = 100            # (change requires restart)
-unix_socket_directories = '/var/run/postgresql'    # comma-separated list of directories
+  external_pid_file = '/var/run/postgresql/9.4-main.pid'            # write an extra PID file
+                      # (change requires restart)
+  listen_addresses = '*'        # what IP address(es) to listen on;
+                      # comma-separated list of addresses;
+                      # defaults to 'localhost'; use '*' for all
+                      # (change requires restart)
+  port = 5432                # (change requires restart)
+  max_connections = 100            # (change requires restart)
+  unix_socket_directories = '/var/run/postgresql'    # comma-separated list of directories
 
-#ssl = true                # (change requires restart)
-                    # (change requires restart)
-#ssl_cert_file = '/etc/ssl/certs/ssl-cert-snakeoil.pem'        # (change requires restart)
-#ssl_key_file = '/etc/ssl/private/ssl-cert-snakeoil-postgres.key'        # (change requires restart)
+  #ssl = true                # (change requires restart)
+                      # (change requires restart)
+  #ssl_cert_file = '/etc/ssl/certs/ssl-cert-snakeoil.pem'        # (change requires restart)
+  #ssl_key_file = '/etc/ssl/private/ssl-cert-snakeoil-postgres.key'        # (change requires restart)
 
-shared_buffers = 128MB            # min 128kB
-dynamic_shared_memory_type = posix    # the default is the first option
-shared_preload_libraries = 'bdr'    # (change requires restart)
+  shared_buffers = 128MB            # min 128kB
+  dynamic_shared_memory_type = posix    # the default is the first option
+  shared_preload_libraries = 'bdr'    # (change requires restart)
 
-max_worker_processes = 20
-wal_level = 'logical'            # minimal, archive, hot_standby, or logical
-max_wal_senders = 10        # max number of walsender processes
+  max_worker_processes = 20
+  wal_level = 'logical'            # minimal, archive, hot_standby, or logical
+  max_wal_senders = 10        # max number of walsender processes
 
-max_replication_slots = 10    # max number of replication slots
-track_commit_timestamp = on    # collect timestamp of transaction commit
+  max_replication_slots = 10    # max number of replication slots
+  track_commit_timestamp = on    # collect timestamp of transaction commit
 
-log_error_verbosity = default
-log_min_messages = warning
-log_line_prefix = '%t [%p-%l] %q%u@%d '            # special values:
+  log_error_verbosity = default
+  log_min_messages = warning
+  log_line_prefix = '%t [%p-%l] %q%u@%d '            # special values:
 
-log_timezone = 'localtime'
+  log_timezone = 'localtime'
 
-stats_temp_directory = '/var/run/postgresql/9.4-main.pg_stat_tmp'
+  stats_temp_directory = '/var/run/postgresql/9.4-main.pg_stat_tmp'
 
-datestyle = 'iso, dmy'
-timezone = 'localtime'
-default_text_search_config = 'pg_catalog.english'
-```
+  datestyle = 'iso, dmy'
+  timezone = 'localtime'
+  default_text_search_config = 'pg_catalog.english'
+  ```
 
 5. Reboot the machine
 
 6. Create the postgresql extensions on both databases:
-```
-su -l postgres
-psql fusionpbx
-create extension btree_gist;
-create extension pgcrypto;
-create extension bdr;
-\connect freeswitch;
-create extension btree_gist;
-create extension pgcrypto;
-create extension bdr;
-```
+  ```
+  su -l postgres
+  psql fusionpbx
+  create extension btree_gist;
+  create extension pgcrypto;
+  create extension bdr;
+  \connect freeswitch;
+  create extension btree_gist;
+  create extension pgcrypto;
+  create extension bdr;
+  ```
 
 7. Create bdr group for fusionpbx and freeswitch databases:
-```
-su -l postgres
-psql fusionpbx
-SELECT bdr.bdr_group_create(local_node_name := 'fusion1', node_external_dsn := 'host=NODE1IP port=5432  dbname=fusionpbx connect_timeout=10 keepalives_idle=5 keepalives_interval=1');
-\connect freeswitch
-SELECT bdr.bdr_group_create(local_node_name := 'fusion1', node_external_dsn := 'host=NODE1IP port=5432  dbname=freeswitch connect_timeout=10 keepalives_idle=5 keepalives_interval=1');
-```
+  ```
+  su -l postgres
+  psql fusionpbx
+  SELECT bdr.bdr_group_create(local_node_name := 'fusion1', node_external_dsn := 'host=NODE1IP port=5432  dbname=fusionpbx connect_timeout=10 keepalives_idle=5 keepalives_interval=1');
+  \connect freeswitch
+  SELECT bdr.bdr_group_create(local_node_name := 'fusion1', node_external_dsn := 'host=NODE1IP port=5432  dbname=freeswitch connect_timeout=10 keepalives_idle=5 keepalives_interval=1');
+  ```
 
 ###Fusion2
 
 1. Add the necessary repos and keys:
-```
-echo 'deb http://apt.postgresql.org/pub/repos/apt/ jessie-pgdg main'  >> /etc/apt/sources.list
-echo 'deb http://packages.2ndquadrant.com/bdr/apt/ jessie-2ndquadrant main' >> /etc/apt/sources.list
-/usr/bin/wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | apt-key add -
-/usr/bin/wget --quiet -O - http://packages.2ndquadrant.com/bdr/apt/AA7A6805.asc | apt-key add -
-apt-get update && apt-get upgrade -y
-```
+  ```
+  echo 'deb http://apt.postgresql.org/pub/repos/apt/ jessie-pgdg main'  >> /etc/apt/sources.list
+  echo 'deb http://packages.2ndquadrant.com/bdr/apt/ jessie-2ndquadrant main' >> /etc/apt/sources.list
+  /usr/bin/wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | apt-key add -
+  /usr/bin/wget --quiet -O - http://packages.2ndquadrant.com/bdr/apt/AA7A6805.asc | apt-key add -
+  apt-get update && apt-get upgrade -y
+  ```
 2. Install the following packages
-```
-sudo apt-get install postgresql-bdr-9.4 postgresql-bdr-9.4-bdr-plugin postgresql-bdr-contrib-9.4  
-```
+  ```
+  sudo apt-get install postgresql-bdr-9.4 postgresql-bdr-9.4-bdr-plugin postgresql-bdr-contrib-9.4  
+  ```
 
 3. Create and setup the fusionpbx and freeswitch databases for BDR replication:
-```
-sudo -u postgres psql -c "CREATE DATABASE fusionpbx";
-sudo -u postgres psql -c "CREATE DATABASE freeswitch";
-sudo -u postgres psql -c "CREATE ROLE fusionpbx WITH SUPERUSER LOGIN PASSWORD 'NODE1DBPASSWORD';"
-sudo -u postgres psql -c "CREATE ROLE freeswitch WITH SUPERUSER LOGIN PASSWORD 'NODE1DBPASSWORD';"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE fusionpbx to fusionpbx;"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE freeswitch to fusionpbx;"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE freeswitch to freeswitch;"
-```
+  ```
+  sudo -u postgres psql -c "CREATE DATABASE fusionpbx";
+  sudo -u postgres psql -c "CREATE DATABASE freeswitch";
+  sudo -u postgres psql -c "CREATE ROLE fusionpbx WITH SUPERUSER LOGIN PASSWORD 'NODE1DBPASSWORD';"
+  sudo -u postgres psql -c "CREATE ROLE freeswitch WITH SUPERUSER LOGIN PASSWORD 'NODE1DBPASSWORD';"
+  sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE fusionpbx to fusionpbx;"
+  sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE freeswitch to fusionpbx;"
+  sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE freeswitch to freeswitch;"
+  ```
 
 4. Add the following config files replacing YOURSUBNET with your subnet in cidr notation (same as fusion1):
 ###/etc/postgresql/9.4/main/postgresql.conf
-```
-data_directory = '/var/lib/postgresql/9.4/main'        # use data in another directory
-                    # (change requires restart)
-hba_file = '/etc/postgresql/9.4/main/pg_hba.conf'    # host-based authentication file
-                    # (change requires restart)
-ident_file = '/etc/postgresql/9.4/main/pg_ident.conf'    # ident configuration file
-                    # (change requires resta##TODO
-rt)
+  ```
+  data_directory = '/var/lib/postgresql/9.4/main'        # use data in another directory
+                      # (change requires restart)
+  hba_file = '/etc/postgresql/9.4/main/pg_hba.conf'    # host-based authentication file
+                      # (change requires restart)
+  ident_file = '/etc/postgresql/9.4/main/pg_ident.conf'    # ident configuration file
+                      # (change requires resta##TODO
+  rt)
 
-external_pid_file = '/var/run/postgresql/9.4-main.pid'            # write an extra PID file
-                    # (change requires restart)
-listen_addresses = '*'        # what IP address(es) to listen on;
-                    # comma-separated list of addresses;
-                    # defaults to 'localhost'; use '*' for all
-                    # (change requires restart)
-port = 5432                # (change requires restart)
-max_connections = 100            # (change requires restart)
-unix_socket_directories = '/var/run/postgresql'    # comma-separated list of directories
+  external_pid_file = '/var/run/postgresql/9.4-main.pid'            # write an extra PID file
+                      # (change requires restart)
+  listen_addresses = '*'        # what IP address(es) to listen on;
+                      # comma-separated list of addresses;
+                      # defaults to 'localhost'; use '*' for all
+                      # (change requires restart)
+  port = 5432                # (change requires restart)
+  max_connections = 100            # (change requires restart)
+  unix_socket_directories = '/var/run/postgresql'    # comma-separated list of directories
 
-#ssl = true                # (change requires restart)
-                    # (change requires restart)
-#ssl_cert_file = '/etc/ssl/certs/ssl-cert-snakeoil.pem'        # (change requires restart)
-#ssl_key_file = '/etc/ssl/private/ssl-cert-snakeoil-postgres.key'        # (change requires restart)
+  #ssl = true                # (change requires restart)
+                      # (change requires restart)
+  #ssl_cert_file = '/etc/ssl/certs/ssl-cert-snakeoil.pem'        # (change requires restart)
+  #ssl_key_file = '/etc/ssl/private/ssl-cert-snakeoil-postgres.key'        # (change requires restart)
 
-shared_buffers = 128MB            # min 128kB
-dynamic_shared_memory_type = posix    # the default is the first option
-shared_preload_libraries = 'bdr'    # (change requires restart)
+  shared_buffers = 128MB            # min 128kB
+  dynamic_shared_memory_type = posix    # the default is the first option
+  shared_preload_libraries = 'bdr'    # (change requires restart)
 
-max_worker_processes = 20
-wal_level = 'logical'            # minimal, archive, hot_standby, or logical
-max_wal_senders = 10        # max number of walsender processes
+  max_worker_processes = 20
+  wal_level = 'logical'            # minimal, archive, hot_standby, or logical
+  max_wal_senders = 10        # max number of walsender processes
 
-max_replication_slots = 10    # max number of replication slots
-track_commit_timestamp = on    # collect timestamp of transaction commit
+  max_replication_slots = 10    # max number of replication slots
+  track_commit_timestamp = on    # collect timestamp of transaction commit
 
-log_error_verbosity = default
-log_min_messages = warning
-log_line_prefix = '%t [%p-%l] %q%u@%d '            # special values:
+  log_error_verbosity = default
+  log_min_messages = warning
+  log_line_prefix = '%t [%p-%l] %q%u@%d '            # special values:
 
-log_timezone = 'localtime'
+  log_timezone = 'localtime'
 
-stats_temp_directory = '/var/run/postgresql/9.4-main.pg_stat_tmp'
+  stats_temp_directory = '/var/run/postgresql/9.4-main.pg_stat_tmp'
 
-datestyle = 'iso, dmy'
-timezone = 'localtime'
-default_text_search_config = 'pg_catalog.english'
-```
+  datestyle = 'iso, dmy'
+  timezone = 'localtime'
+  default_text_search_config = 'pg_catalog.english'
+  ```
 ###/etc/postgresql/9.4/main/pg_hba.conf
-```
-local   all             postgres                                peer
+  ```
+  local   all             postgres                                peer
 
-# TYPE  DATABASE        USER            ADDRESS                 METHOD
+  # TYPE  DATABASE        USER            ADDRESS                 METHOD
 
-# "local" is for Unix domain socket connections only
-local   all             all                                     peer
-# IPv4 local connections:
-host    all             all             127.0.0.1/32            md5
-#hostssl all             all             YOURSUBNET            trust # FOR SSL
-host all             all             YOURSUBNET            trust
-# IPv6 local connections:
-host    all             all             ::1/128                 md5
-# Allow replication connections from localhost, by a user with the
-# replication privilege.
-#local   replication     postgres                                peer
-host    replication     postgres        127.0.0.1/32            md5
-#host    replication     postgres        ::1/128                 md5
-#hostssl  replication     postgres        YOURSUBNET            trust # FOR SSL
-host  replication     postgres        YOURSUBNET              trust
-```
+  # "local" is for Unix domain socket connections only
+  local   all             all                                     peer
+  # IPv4 local connections:
+  host    all             all             127.0.0.1/32            md5
+  #hostssl all             all             YOURSUBNET            trust # FOR SSL
+  host all             all             YOURSUBNET            trust
+  # IPv6 local connections:
+  host    all             all             ::1/128                 md5
+  # Allow replication connections from localhost, by a user with the
+  # replication privilege.
+  #local   replication     postgres                                peer
+  host    replication     postgres        127.0.0.1/32            md5
+  #host    replication     postgres        ::1/128                 md5
+  #hostssl  replication     postgres        YOURSUBNET            trust # FOR SSL
+  host  replication     postgres        YOURSUBNET              trust
+  ```
 
 5. restart postgresql `service postgresql restart`
 
 6. create db extensions for fusionpbx and freeswitch databases:
-```
-su -l postgres
-psql fusionpbx
-create extension btree_gist;
-create extension pgcrypto;
-create extension bdr;
-\connect freeswitch;
-create extension btree_gist;
-create extension pgcrypto;
-create extension bdr;
-```
+  ```
+  su -l postgres
+  psql fusionpbx
+  create extension btree_gist;
+  create extension pgcrypto;
+  create extension bdr;
+  \connect freeswitch;
+  create extension btree_gist;
+  create extension pgcrypto;
+  create extension bdr;
+  ```
 
 6. On fusion2 join to the bdr group you've created on fusion1. NODE1IP is a management ip of node 1, preferrably a private ip
-```
-su -l postgres
-psql fusionpbx
-select bdr.bdr_group_join(local_node_name := 'fusion2', node_external_dsn := 'host=NODE2IP port=5432 dbname=fusionpbx connect_timeout=10 keepalives_idle=5 keepalives_interval=1', join_using_dsn := 'host=NODE1IP  port=5432 dbname=fusionpbx connect_timeout=10 keepalives_idle=5 keepalives_interval=1');
-\connect freeswitch
-select bdr.bdr_group_join(local_node_name := 'fusion2', node_external_dsn := 'host=NODE2IP port=5432 dbname=freeswitch connect_timeout=10 keepalives_idle=5 keepalives_interval=1', join_using_dsn := 'host=NODE1IP  port=5432 dbname=freeswitch connect_timeout=10 keepalives_idle=5 keepalives_interval=1');
-```
+  ```
+  su -l postgres
+  psql fusionpbx
+  select bdr.bdr_group_join(local_node_name := 'fusion2', node_external_dsn := 'host=NODE2IP port=5432 dbname=fusionpbx connect_timeout=10 keepalives_idle=5 keepalives_interval=1', join_using_dsn := 'host=NODE1IP  port=5432 dbname=fusionpbx connect_timeout=10 keepalives_idle=5 keepalives_interval=1');
+  \connect freeswitch
+  select bdr.bdr_group_join(local_node_name := 'fusion2', node_external_dsn := 'host=NODE2IP port=5432 dbname=freeswitch connect_timeout=10 keepalives_idle=5 keepalives_interval=1', join_using_dsn := 'host=NODE1IP  port=5432 dbname=freeswitch connect_timeout=10 keepalives_idle=5 keepalives_interval=1');
+  ```
 
 You should see the fusionpx on fusion2 contains a number of tables after the join, as it has copied the tables from fusion1. If both joins succeeded replication is now happening between both nodes. *You can check to see that the join has succeeded by doing a `select bdr.bdr_node_join_wai1. t_for_ready();` on each database*. If it worked it will return, if it hangs, something has gone wrong.
 You can also see the status of the nodes in the group by doing: `select * from bdr.bdr_nodes;`
@@ -310,69 +310,69 @@ Dead/killed nodes have node status 'k'.
 To remove a node/start over/re-join a node see here TODO
 
 7. Add the freeswitch tables so we can switch from sqlite to postgresql. This can be done on either fusion1 or fusion2 (but not both), as replication is now taking place.
-```
-cd /tmp
-wget https://raw.githubusercontent.com/fusionpbx/fusionpbx/master/resources/install/sql/switch.sql
-chmod 755 switch.sql
-su -l postgres
-psql -U postgres -d freeswitch -f /tmp/switch.sql -L sql.log
-```
+  ```
+  cd /tmp
+  wget https://raw.githubusercontent.com/fusionpbx/fusionpbx/master/resources/install/sql/switch.sql
+  chmod 755 switch.sql
+  su -l postgres
+  psql -U postgres -d freeswitch -f /tmp/switch.sql -L sql.log
+  ```
 
 8. Now that fusion2 is in the bdr group we can install fusionpbx on fusion2. This way we still have a GUI if fusion1 goes down for some reason. *Repeat step 2 for fusion1 on fusion2* to install fusionpbx on fusion2, make sure you uncomment the BDR section the same way to avoid having two instances of postgres. Make sure you can login to both fusion1 and fusion2.
 
 9. Tell freeswitch to use the postgres database. You'll have to set/uncomment the following lines in each file:
 ###/etc/freeswitch/callcenter.conf
-```
-<param name="odbc-dsn" value="$${dsn}"/>
-```
+  ```
+  <param name="odbc-dsn" value="$${dsn}"/>
+  ```
 ###/etc/freeswitch/switch.conf.xml
-```
-<param name="switchname" value="freeswitch"/>
-<param name="core-db-dsn" value="$${dsn}" />
-```
+  ```
+  <param name="switchname" value="freeswitch"/>
+  <param name="core-db-dsn" value="$${dsn}" />
+  ```
 ###/etc/freeswitch/fifo.conf.xml
-```
-<param name="odbc-dsn" value="$${dsn}"/>
-```
+  ```
+  <param name="odbc-dsn" value="$${dsn}"/>
+  ```
 ###/etc/freeswitch/db.conf.xml
-```
-<param name="core-db-dsn" value="$${dsn}" />
-```
+  ```
+  <param name="core-db-dsn" value="$${dsn}" />
+  ```
 
 ###/etc/freeswitch/voicemail.conf.xml
-```
-<param name="odbc-dsn" value="$${dsn}"/>
-```
+  ```
+  <param name="odbc-dsn" value="$${dsn}"/>
+  ```
 
 10. In order to tell fusion where the database is we need to define the DSN. Find out what the DSN is with: `cat /etc/fusionpbx/config.lua | grep database.switch`
 
-```
-root@jessie:/home/vagrant# cat /etc/fusionpbx/config.lua | grep database.switch
-	database.switch = "pgsql://hostaddr=127.0.0.1 port=5432 dbname=freeswitch user=fusionpbx password=YOURPASS options='' application_name='freeswitch'";
-```
+  ```
+  root@jessie:/home/vagrant# cat /etc/fusionpbx/config.lua | grep database.switch
+  	database.switch = "pgsql://hostaddr=127.0.0.1 port=5432 dbname=freeswitch user=fusionpbx password=YOURPASS options='' application_name='freeswitch'";
+  ```
 
 11. Create the DSN variable in the web GUI. Go to *Advanced -> Variables*, and click the plus on the right hand side in the defaults section. Create the variable with the following info:
-```
-Name: dsn
-Value: pgsql://hostaddr=127.0.0.1 port=5432 dbname=freeswitch user=fusionpbx password=YOURPASS options='' application_name='freeswitch'
-switchname: freeswitch
-Category: defaults
-```
+  ```
+  Name: dsn
+  Value: pgsql://hostaddr=127.0.0.1 port=5432 dbname=freeswitch user=fusionpbx password=YOURPASS options='' application_name='freeswitch'
+  switchname: freeswitch
+  Category: defaults
+  ```
 
 12. Now create another variable called *dsn_system*. You can get the value by doing this command: `cat /etc/fusionpbx/config.lua | grep database.system`
-```
-Name: dsn_system
-Value: pgsql://hostaddr=127.0.0.1 port=5432 dbname=fusionpbx user=fusionpbx password=YOURPASS options='' application_name='fusionpbx'
-switchname: freeswitch
-Category: defaults
-```
+  ```
+  Name: dsn_system
+  Value: pgsql://hostaddr=127.0.0.1 port=5432 dbname=fusionpbx user=fusionpbx password=YOURPASS options='' application_name='fusionpbx'
+  switchname: freeswitch
+  Category: defaults
+  ```
 
 13. Update the sip profiles table so they are kept in the postgres fusionpbx database instead of sqlite (default):
-```
-su postgres
-psql fusionpbx
-UPDATE v_sip_profile_settings SET sip_profile_setting_enabled = 'true' WHERE sip_profile_setting_name = 'odbc-dsn' AND sip_profile_setting_enabled = 'false';
-```
+  ```
+  su postgres
+  psql fusionpbx
+  UPDATE v_sip_profile_settings SET sip_profile_setting_enabled = 'true' WHERE sip_profile_setting_name = 'odbc-dsn' AND sip_profile_setting_enabled = 'false';
+  ```
 
 14. Go into `/var/lib/freeswitch/db` and delete all the sqlite databases, then restart freeswitch on both fusion1 and fusion2. if freeswitch starts up again and `/var/lib/freeswitch/db` is empty you've successfully switched to postgres. If something goes wrong check the freeswitch log.
 
