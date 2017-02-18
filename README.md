@@ -276,9 +276,22 @@ host    replication     postgres        127.0.0.1/32            md5
 host  replication     postgres        YOURSUBNET              trust
 ```
 
-5. Reboot fusion2
+5. restart postgresql `service postgresql restart`
 
-6. On fusion2 join to bdr group
+6. create db extensions for fusionpbx and freeswitch databases:
+```
+su -l postgres
+psql fusionpbx
+create extension btree_gist;
+create extension pgcrypto;
+create extension bdr;
+\connect freeswitch;
+create extension btree_gist;
+create extension pgcrypto;
+create extension bdr;
+```
+
+6. On fusion2 join to the bdr group you've created on fusion1. NODE1IP is a management ip of node 1, preferrably a private ip
 ```
 su -l postgres
 psql fusionpbx
@@ -287,8 +300,23 @@ select bdr.bdr_group_join(local_node_name := 'fusion2', node_external_dsn := 'ho
 select bdr.bdr_group_join(local_node_name := 'fusion2', node_external_dsn := 'host=NODE2IP port=5432 dbname=freeswitch connect_timeout=10 keepalives_idle=5 keepalives_interval=1', join_using_dsn := 'host=NODE1IP  port=5432 dbname=freeswitch connect_timeout=10 keepalives_idle=5 keepalives_interval=1');
 ```
 
+You should see the fusionpx on fusion2 contains a number of tables after the join, as it has copied the tables from fusion1. If both joins succeeded replication is now happening between both nodes. *You can check to see that the join has succeeded by doing a `select bdr.bdr_node_join_wait_for_ready();` on each database*. If it worked it will return, if it hangs, something has gone wrong.
+You can also see the status of the nodes in the group by doing: `select * from bdr.bdr_nodes;`
+Active replicating nodes have node status 'r'.
+Initializing nodes have node status 'i'.
+Dead/killed nodes have node status 'k'.
+
+To remove a node/start over/re-join a node see here TODO
+
+7. Add the freeswitch tables so we can switch from sqlite to postgresql. This can be done on either fusion1 or fusion2 (but not both), as replication is now taking place.
+```
+cd /tmp
+wget https://raw.githubusercontent.com/fusionpbx/fusionpbx/master/resources/install/sql/switch.sql
+chmod 755 switch.sql
+su -l postgres
+psql -U postgres -d freeswitch -f /tmp/switch.sql -L sql.log
+```
 ##TODO
-. add freeswitch db tables
 
 . switch to pg (set switchname, nonlocal bind)
 
